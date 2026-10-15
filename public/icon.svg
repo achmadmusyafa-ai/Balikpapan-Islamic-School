@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="50%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+    <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Playful background bubbles/stars -->
+  <circle cx="80" cy="90" r="24" fill="#ffffff" opacity="0.2" />
+  <circle cx="440" cy="110" r="18" fill="#ffffff" opacity="0.2" />
+  <circle cx="90" cy="420" r="16" fill="#ffffff" opacity="0.15" />
+  <circle cx="420" cy="410" r="28" fill="#ffffff" opacity="0.2" />
+
+  <!-- Group with shadow -->
+  <g filter="url(#shadow)">
+    <!-- Open Book Base -->
+    <path d="M120 370 C190 340, 240 350, 256 365 C272 350, 322 340, 392 370 L392 290 C322 260, 272 270, 256 285 C240 270, 190 260, 120 290 Z" fill="#ffffff" />
+    <path d="M130 380 C195 352, 242 360, 256 372 C270 360, 317 352, 382 380 L382 300 C317 272, 270 280, 256 292 C242 280, 195 272, 130 300 Z" fill="url(#bookGrad)" opacity="0.9" />
+
+    <!-- Big Happy Star Character -->
+    <g transform="translate(256, 210) scale(1.15)">
+      <!-- Star polygon centered at 0,0 -->
+      <polygon points="0,-95 28,-30 95,-22 44,25 60,92 0,55 -60,92 -44,25 -95,-22 -28,-30" fill="url(#starGrad)" stroke="#D97706" stroke-width="6" stroke-linejoin="round" />
+      
+      <!-- Cheerful Face -->
+      <!-- Eyes -->
+      <ellipse cx="-20" cy="-6" rx="7" ry="11" fill="#1E293B" />
+      <circle cx="-18" cy="-10" r="3.5" fill="#ffffff" />
+      <ellipse cx="20" cy="-6" rx="7" ry="11" fill="#1E293B" />
+      <circle cx="22" cy="-10" r="3.5" fill="#ffffff" />
+      
+      <!-- Cheeks -->
+      <ellipse cx="-35" cy="8" rx="8" ry="5" fill="#F43F5E" opacity="0.6" />
+      <ellipse cx="35" cy="8" rx="8" ry="5" fill="#F43F5E" opacity="0.6" />
+      
+      <!-- Big Smile -->
+      <path d="M-18 10 Q0 28 18 10" fill="#BE123C" stroke="#1E293B" stroke-width="4" stroke-linecap="round" />
+      <!-- Tongue in smile -->
+      <path d="M-8 17 Q0 26 8 17 Q4 22 -8 17 Z" fill="#FDA4AF" />
+
+      <!-- Graduation Cap / Topi Wisuda Cilik -->
+      <g transform="translate(0, -90)">
+        <polygon points="0,-22 55,-4 0,14 -55,-4" fill="#1E1B4B" />
+        <polygon points="0,-18 45,-4 0,10 -45,-4" fill="#312E81" />
+        <rect x="-18" y="6" width="36" height="14" rx="4" fill="#1E1B4B" />
+        <!-- Tassel -->
+        <circle cx="0" cy="-4" r="5" fill="#F59E0B" />
+        <path d="M0 -4 Q30 5 36 26" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" />
+        <polygon points="33,24 39,24 41,34 31,34" fill="#F59E0B" />
+      </g>
+    </g>
+  </g>
+</svg>

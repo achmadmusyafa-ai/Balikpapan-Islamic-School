@@ -1,0 +1,6 @@
+{
+  "name": "Petualangan Pintar SD - Game Kuis & Belajar Seru",
+  "description": "Game edukasi interaktif untuk siswa sekolah dasar dengan kuis seru, kustomisasi avatar, papan peringkat, sistem lencana prestasi, mode offline, dan pengingat belajar harian.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

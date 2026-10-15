@@ -1,0 +1,192 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Profil siswa sekolah dasar beserta avatar dan progres belajarnya.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "ID unik pengguna (Firebase Auth UID)",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Nama lengkap atau nama panggilan siswa",
+          "maxLength": 100
+        },
+        "school": {
+          "type": "string",
+          "description": "Nama sekolah dasar siswa",
+          "maxLength": 100
+        },
+        "grade": {
+          "type": "number",
+          "description": "Tingkat kelas siswa (1-6 SD)"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email siswa atau orang tua jika login dengan Google",
+          "maxLength": 150
+        },
+        "level": {
+          "type": "number",
+          "description": "Level siswa (1-8)"
+        },
+        "currentXp": {
+          "type": "number",
+          "description": "Total poin pengalaman (XP)"
+        },
+        "coins": {
+          "type": "number",
+          "description": "Total koin reward"
+        },
+        "totalStars": {
+          "type": "number",
+          "description": "Total bintang emas yang terkumpul"
+        },
+        "streakDays": {
+          "type": "number",
+          "description": "Jumlah hari streak belajar berturut-turut"
+        },
+        "avatar": {
+          "type": "object",
+          "description": "Konfigurasi kustomisasi avatar siswa"
+        },
+        "unlockedBadges": {
+          "type": "array",
+          "description": "Daftar ID lencana yang sudah diraih"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan profil"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan profil terakhir"
+        }
+      },
+      "required": ["userId", "name", "level", "currentXp", "coins", "totalStars"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Entri skor publik siswa untuk papan peringkat nasional.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID siswa",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Nama siswa",
+          "maxLength": 100
+        },
+        "school": {
+          "type": "string",
+          "description": "Nama sekolah",
+          "maxLength": 100
+        },
+        "level": {
+          "type": "number",
+          "description": "Level siswa"
+        },
+        "totalXp": {
+          "type": "number",
+          "description": "Total XP siswa"
+        },
+        "starsCount": {
+          "type": "number",
+          "description": "Jumlah bintang"
+        },
+        "badgesCount": {
+          "type": "number",
+          "description": "Jumlah lencana"
+        },
+        "avatar": {
+          "type": "object",
+          "description": "Avatar siswa"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan skor"
+        }
+      },
+      "required": ["userId", "name", "totalXp", "level", "starsCount"]
+    },
+    "CustomChapter": {
+      "title": "CustomChapter",
+      "description": "Bab atau materi kuis buatan guru yang bisa dikerjakan murid.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID unik bab kuis",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Judul materi kuis",
+          "maxLength": 120
+        },
+        "description": {
+          "type": "string",
+          "description": "Deskripsi singkat materi",
+          "maxLength": 250
+        },
+        "category": {
+          "type": "string",
+          "description": "Kategori mata pelajaran (matematika, ipa, indonesia, ips, inggris)",
+          "maxLength": 30
+        },
+        "icon": {
+          "type": "string",
+          "description": "Emoji icon bab",
+          "maxLength": 20
+        },
+        "gradeLevel": {
+          "type": "string",
+          "description": "Tingkat kelas ('semua', 'rendah', 'tinggi')",
+          "maxLength": 20
+        },
+        "requiredLevel": {
+          "type": "number",
+          "description": "Level minimal siswa"
+        },
+        "questions": {
+          "type": "array",
+          "description": "Daftar soal pilihan ganda buatan guru"
+        },
+        "teacherEmail": {
+          "type": "string",
+          "description": "Email pembuat materi",
+          "maxLength": 150
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembaruan materi kuis"
+        }
+      },
+      "required": ["id", "title", "category", "questions"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Data profil privat dan progres belajar per siswa."
+    },
+    "/leaderboard/{userId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Data publik papan peringkat siswa."
+    },
+    "/custom_chapters/{chapterId}": {
+      "schema": "CustomChapter",
+      "description": "Bab kuis dan soal kustom buatan guru."
+    }
+  }
+}

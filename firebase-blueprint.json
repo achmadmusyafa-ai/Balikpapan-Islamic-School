@@ -173,6 +173,53 @@
         }
       },
       "required": ["id", "title", "category", "questions"]
+    },
+    "SchoolAccount": {
+      "title": "SchoolAccount",
+      "description": "Akun sekolah siswa dan guru SDIT Balikpapan Islamic School.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID unik akun",
+          "maxLength": 128
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Nama lengkap pengguna",
+          "maxLength": 100
+        },
+        "username": {
+          "type": "string",
+          "description": "Nama pengguna untuk login",
+          "maxLength": 50
+        },
+        "password": {
+          "type": "string",
+          "description": "Kata sandi akun",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Peran pengguna (siswa atau guru)",
+          "enum": ["siswa", "guru"]
+        },
+        "grade": {
+          "type": "number",
+          "description": "Tingkat kelas siswa (1-6 SD)"
+        },
+        "school": {
+          "type": "string",
+          "description": "Nama sekolah",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan akun"
+        }
+      },
+      "required": ["id", "fullName", "username", "password", "role", "school"]
     }
   },
   "firestore": {
@@ -187,6 +234,10 @@
     "/custom_chapters/{chapterId}": {
       "schema": "CustomChapter",
       "description": "Bab kuis dan soal kustom buatan guru."
+    },
+    "/school_accounts/{accountId}": {
+      "schema": "SchoolAccount",
+      "description": "Data akun sekolah siswa dan guru untuk autentikasi."
     }
   }
 }

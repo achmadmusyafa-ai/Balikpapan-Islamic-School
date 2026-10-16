@@ -57,8 +57,19 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
         );
       }
     } catch (err: unknown) {
-      console.error(err);
-      setErrorMessage('Gagal masuk dengan Google. Pastikan koneksi internet stabil dan jendela pop-up diizinkan.');
+      console.error('Google Sign In error:', err);
+      const errorCode = (err as { code?: string })?.code || '';
+      const errorMsg = (err as { message?: string })?.message || '';
+
+      if (errorCode.includes('unauthorized-domain') || errorMsg.includes('unauthorized-domain')) {
+        setErrorMessage(
+          'Domain belum didaftarkan di Firebase Console. Tambahkan "balikpapan-islamic-school.vercel.app" di menu Firebase Authentication > Settings > Authorized domains.'
+        );
+      } else if (errorCode.includes('popup-closed-by-user')) {
+        setErrorMessage('Jendela login ditutup sebelum selesai. Silakan coba lagi.');
+      } else {
+        setErrorMessage('Gagal masuk dengan Google. Pastikan koneksi internet stabil dan jendela pop-up diizinkan.');
+      }
     } finally {
       setIsLoading(false);
     }

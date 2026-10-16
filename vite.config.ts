@@ -6,6 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
+    base: './',
     plugins: [
       react(),
       tailwindcss(),
@@ -13,15 +14,15 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'school-logo.png'],
         manifest: {
-          id: '/',
+          id: './',
           name: 'Game Edu Bis',
           short_name: 'EduBis',
           description: 'Game Pelajaran Interaktif SDIT Balikpapan Islamic School',
-          theme_color: '#4F46E5',
-          background_color: '#EEF2FF',
+          theme_color: '#4F7D32',
+          background_color: '#F8FAF6',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: './',
+          scope: './',
           icons: [
             {
               src: '/pwa-192x192.png',

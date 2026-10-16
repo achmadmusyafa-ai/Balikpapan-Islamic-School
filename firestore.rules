@@ -64,5 +64,16 @@ service cloud.firestore {
         && request.resource.data.category is string;
       allow delete: if isSignedIn();
     }
+
+    // School accounts for students and teachers (SDIT Balikpapan Islamic School)
+    match /school_accounts/{accountId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(accountId)
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() <= 100
+        && request.resource.data.username is string
+        && request.resource.data.username.size() <= 50;
+      allow delete: if false;
+    }
   }
 }

@@ -110,10 +110,17 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ chapter, user, onSelec
       </div>
 
       {/* Card Footer: Questions count and action button */}
-      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl ${style.accent}`}>
-          {chapter.questions.length} Soal Pilihan Ganda
-        </span>
+      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${style.accent}`}>
+            {chapter.questions.length} Soal
+          </span>
+          <span className="text-[10px] font-black px-2 py-0.5 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20">
+            {chapter.targetGrades && chapter.targetGrades.length > 0
+              ? `Kelas ${chapter.targetGrades.join(', ')}`
+              : (chapter.gradeLevel === 'semua' ? 'Semua Kelas' : `Kelas ${chapter.gradeLevel}`)}
+          </span>
+        </div>
 
         <button
           disabled={isLocked}

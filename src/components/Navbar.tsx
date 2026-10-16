@@ -19,11 +19,15 @@ import {
   Sparkles,
   User as UserIcon,
   GraduationCap,
+  LogOut,
 } from 'lucide-react';
+import { AppAccount } from '../types';
 
 interface NavbarProps {
   user: UserProfile;
   currentUser?: { email?: string | null; displayName?: string | null } | null;
+  activeAccount?: AppAccount | null;
+  onLogout?: () => void;
   onOpenAvatar: () => void;
   onOpenLeaderboard: () => void;
   onOpenBadges: () => void;
@@ -37,6 +41,8 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   user,
   currentUser,
+  activeAccount,
+  onLogout,
   onOpenAvatar,
   onOpenLeaderboard,
   onOpenBadges,
@@ -87,13 +93,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <h1 className="text-sm sm:text-base font-extrabold font-kids text-[#4F7D32] tracking-wide whitespace-nowrap">
                   Game Edu Bis
                 </h1>
-                <span className="hidden lg:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/30">
-                  SDIT Balikpapan Islamic School
-                </span>
+                {activeAccount?.role === 'siswa' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4F7D32] text-white shadow-xs">
+                    🎒 Kelas {user.grade}
+                  </span>
+                ) : activeAccount?.role === 'guru' ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#D9361E] text-white shadow-xs">
+                    👨‍🏫 Guru BIS
+                  </span>
+                ) : (
+                  <span className="hidden lg:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/30">
+                    SDIT Balikpapan Islamic School
+                  </span>
+                )}
               </div>
               {/* Level Title Tag */}
               <span className="text-[11px] font-bold text-[#D9361E] block leading-tight">
-                {levelInfo.title}
+                {activeAccount ? `${activeAccount.fullName} • ${levelInfo.title}` : levelInfo.title}
               </span>
             </div>
           </div>
@@ -175,28 +191,49 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-[#4F7D32]/10 text-[#4F7D32] hover:bg-[#4F7D32]/20 border border-[#4F7D32]/40'
                 : 'bg-slate-100 text-[#4F7D32] hover:bg-[#4F7D32]/10 border border-[#4F7D32]/20'
             }`}
-            title={currentUser ? `Akun: ${currentUser.email}` : 'Masuk Akun Siswa'}
+            title={activeAccount ? `Profil: ${activeAccount.fullName}` : (currentUser ? `Akun: ${currentUser.email}` : 'Masuk Akun Siswa')}
           >
             <UserIcon className="w-5 h-5 text-[#4F7D32]" />
-            <span className="hidden sm:inline-block text-xs font-bold">
-              {currentUser ? 'Akun Aktif' : 'Masuk'}
+            <span className="hidden sm:inline-block text-xs font-bold truncate max-w-[90px]">
+              {activeAccount ? activeAccount.fullName.split(' ')[0] : (currentUser ? 'Akun Aktif' : 'Masuk')}
             </span>
           </button>
 
-          {/* Teacher Mode Button */}
+          {/* Teacher Mode Button (Only for Guru or shows restricted for students) */}
           <button
             onClick={() => {
               sound.playPop();
               onOpenTeacher();
             }}
-            className="p-2 rounded-2xl bg-[#D9361E] hover:bg-[#B92812] text-white border border-[#D9361E] flex items-center gap-1.5 transition active:scale-95 shadow-sm"
-            title="Ruang Guru (Kelola Soal & Kuis)"
+            className={`p-2 rounded-2xl border flex items-center gap-1.5 transition active:scale-95 shadow-sm ${
+              activeAccount?.role === 'guru'
+                ? 'bg-[#D9361E] hover:bg-[#B92812] text-white border-[#D9361E]'
+                : 'bg-slate-100 text-slate-600 hover:bg-[#D9361E]/10 border-slate-200'
+            }`}
+            title={activeAccount?.role === 'guru' ? 'Ruang Guru (Kelola Soal & Kuis)' : 'Ruang Guru (Khusus Guru / Butuh PIN)'}
           >
-            <GraduationCap className="w-5 h-5 text-[#FFD16A]" />
+            <GraduationCap className={`w-5 h-5 ${activeAccount?.role === 'guru' ? 'text-[#FFD16A]' : 'text-slate-500'}`} />
             <span className="hidden md:inline-block text-xs font-bold font-kids">
               Ruang Guru
             </span>
           </button>
+
+          {/* Ganti Akun / Logout Button */}
+          {activeAccount && onLogout && (
+            <button
+              onClick={() => {
+                sound.playPop();
+                if (window.confirm(`Apakah ${activeAccount.fullName} ingin keluar / ganti akun?`)) {
+                  onLogout();
+                }
+              }}
+              className="p-2 rounded-2xl bg-red-50 hover:bg-red-100 text-[#D9361E] border border-red-200 transition active:scale-95 flex items-center gap-1"
+              title="Keluar / Ganti Akun"
+            >
+              <LogOut className="w-4 h-4 text-[#D9361E]" />
+              <span className="hidden xl:inline text-[11px] font-bold">Keluar</span>
+            </button>
+          )}
 
           {/* Daily Reminder Bell */}
           <button

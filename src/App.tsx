@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizChapter, UserProfile, AvatarConfig, SubjectCategory } from './types';
+import { QuizChapter, UserProfile, AvatarConfig, SubjectCategory, AppAccount } from './types';
 import { QUIZ_CHAPTERS } from './data/quizData';
 import { ALL_BADGES } from './data/badgesData';
 import {
@@ -20,6 +20,12 @@ import {
   loadUserProfileFromCloud,
   fetchCustomChaptersFromCloud,
 } from './lib/firebase';
+import {
+  getActiveSession,
+  clearActiveSession,
+  isChapterAccessibleForGrade,
+} from './utils/accounts';
+import { LoginPortal } from './components/LoginPortal';
 import { StudentAuthModal } from './components/StudentAuthModal';
 import { TeacherDashboardModal } from './components/TeacherDashboardModal';
 import { Navbar } from './components/Navbar';
@@ -51,13 +57,25 @@ import {
   Smile,
   CloudCheck,
   User as UserIcon,
+  Lock,
 } from 'lucide-react';
 
 export default function App() {
-  const [user, setUser] = useState<UserProfile>(loadUserProfile());
+  const [activeAccount, setActiveAccount] = useState<AppAccount | null>(() => getActiveSession());
+  const [user, setUser] = useState<UserProfile>(() => {
+    const base = loadUserProfile();
+    const session = getActiveSession();
+    if (session) {
+      base.name = session.fullName;
+      if (session.grade) base.grade = session.grade;
+      base.role = session.role;
+    }
+    return base;
+  });
+
   const [activeChapter, setActiveChapter] = useState<QuizChapter | null>(null);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('all');
-  const [gradeFilter, setGradeFilter] = useState<'semua' | 'rendah' | 'tinggi'>('semua');
+  const [gradeFilter, setGradeFilter] = useState<string>('semua');
 
   // Chapters state (Default + Custom chapters created by teacher)
   const [chapters, setChapters] = useState<QuizChapter[]>(() => {
@@ -153,6 +171,27 @@ export default function App() {
     } catch {
       // Ignore
     }
+  };
+
+  const handleLoginSuccess = (account: AppAccount) => {
+    setActiveAccount(account);
+    setUser((prev) => ({
+      ...prev,
+      name: account.fullName,
+      grade: account.grade || prev.grade,
+      role: account.role,
+    }));
+    if (account.role === 'siswa' && account.grade) {
+      setGradeFilter(String(account.grade));
+    } else {
+      setGradeFilter('semua');
+    }
+  };
+
+  const handleLogout = () => {
+    sound.playPop();
+    clearActiveSession();
+    setActiveAccount(null);
   };
 
   // Save profile to localStorage whenever it changes
@@ -425,13 +464,40 @@ export default function App() {
     });
   };
 
-  // Filter chapters
+  // Filter chapters with STRICT Grade Access Control
   const filteredChapters = chapters.filter((chap) => {
+    // 1. Subject Category Filter
     if (selectedSubjectFilter !== 'all' && chap.category !== selectedSubjectFilter) {
       return false;
     }
-    if (gradeFilter === 'rendah' && chap.gradeLevel === 'tinggi') return false;
-    if (gradeFilter === 'tinggi' && chap.gradeLevel === 'rendah') return false;
+
+    // 2. Role & Class Access Control:
+    // If logged in as SISWA, STRICTLY restrict to their class
+    if (activeAccount?.role === 'siswa') {
+      const studentGrade = activeAccount.grade || user.grade || 1;
+      return isChapterAccessibleForGrade(chap, studentGrade);
+    }
+
+    // 3. If GURU, can view all classes or filter by specific class
+    if (gradeFilter === 'semua') return true;
+    if (gradeFilter === 'rendah') {
+      return (
+        isChapterAccessibleForGrade(chap, 1) ||
+        isChapterAccessibleForGrade(chap, 2) ||
+        isChapterAccessibleForGrade(chap, 3)
+      );
+    }
+    if (gradeFilter === 'tinggi') {
+      return (
+        isChapterAccessibleForGrade(chap, 4) ||
+        isChapterAccessibleForGrade(chap, 5) ||
+        isChapterAccessibleForGrade(chap, 6)
+      );
+    }
+    const numG = Number(gradeFilter);
+    if (numG >= 1 && numG <= 6) {
+      return isChapterAccessibleForGrade(chap, numG);
+    }
     return true;
   });
 
@@ -441,10 +507,16 @@ export default function App() {
     { id: 'ipa', label: 'IPA / Sains', icon: '🌱' },
     { id: 'indonesia', label: 'Bahasa Indonesia', icon: '📚' },
     { id: 'ips', label: 'Ragam Nusantara', icon: '🇮🇩' },
+    { id: 'pai', label: 'Pendidikan Agama Islam', icon: '🕌' },
     { id: 'inggris', label: 'Fun English', icon: '🇬🇧' },
   ];
 
   const levelInfo = getLevelInfo(user.currentXp);
+
+  // If not logged in, show official Login Portal
+  if (!activeAccount) {
+    return <LoginPortal onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAF6] flex flex-col selection:bg-[#FFD16A]">
@@ -452,12 +524,22 @@ export default function App() {
       <Navbar
         user={user}
         currentUser={currentUser}
+        activeAccount={activeAccount}
+        onLogout={handleLogout}
         onOpenAvatar={() => setIsAvatarOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenBadges={() => setIsBadgesOpen(true)}
         onOpenReminder={() => setIsReminderOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenTeacher={() => setIsTeacherOpen(true)}
+        onOpenTeacher={() => {
+          if (activeAccount?.role === 'siswa') {
+            alert(
+              'Akses Dibatasi: Menu Ruang Guru hanya diperuntukkan bagi Bapak/Ibu Guru SDIT Balikpapan Islamic School.'
+            );
+            return;
+          }
+          setIsTeacherOpen(true);
+        }}
         onToggleSound={handleToggleSound}
         isMuted={user.audioMuted}
       />
@@ -532,11 +614,28 @@ export default function App() {
                 </div>
 
                 <h2 className="text-2xl sm:text-4xl font-extrabold font-kids leading-tight tracking-wide">
-                  Halo, {user.name}! 🎒
+                  Halo, {activeAccount?.role === 'guru' ? `Ustadz/ah ${user.name}` : user.name}!{' '}
+                  {activeAccount?.role === 'guru' ? '👨‍🏫' : '🎒'}
                 </h2>
 
                 <p className="text-xs sm:text-base text-emerald-50 font-medium leading-relaxed">
-                  Selamat datang di <strong>Game Edu Bis</strong>! Selesaikan kuis pilihan ganda pelajaran, raih nilai bintang emas, kumpulkan koin reward, dan jadilah juara SDIT Balikpapan Islamic School!
+                  {activeAccount?.role === 'siswa' ? (
+                    <>
+                      Selamat datang di <strong>Game Edu Bis</strong>! Anda terdaftar sebagai siswa{' '}
+                      <span className="bg-[#FFD16A] text-slate-900 px-2 py-0.5 rounded-lg font-black">
+                        Kelas {user.grade} SDIT Balikpapan Islamic School
+                      </span>
+                      . Akses materi dan kuis dibatasi otomatis sesuai kurikulum kelas Anda!
+                    </>
+                  ) : (
+                    <>
+                      Selamat datang di <strong>Game Edu Bis</strong>! Anda masuk sebagai{' '}
+                      <span className="bg-[#FFD16A] text-slate-900 px-2 py-0.5 rounded-lg font-black">
+                        Guru / Pendidik SDIT Balikpapan Islamic School
+                      </span>{' '}
+                      dengan akses penuh ke seluruh Kelas 1-6 dan pengelolaan bank soal kuis.
+                    </>
+                  )}
                 </p>
 
                 {/* Quick Action buttons */}
@@ -577,12 +676,22 @@ export default function App() {
                   <button
                     onClick={() => {
                       sound.playPop();
+                      if (activeAccount?.role === 'siswa') {
+                        alert(
+                          'Akses Dibatasi: Menu Ruang Guru hanya diperuntukkan bagi Bapak/Ibu Guru SDIT Balikpapan Islamic School.'
+                        );
+                        return;
+                      }
                       setIsTeacherOpen(true);
                     }}
-                    className="px-4 py-2.5 rounded-2xl bg-[#D9361E] hover:bg-[#B92812] text-white font-bold text-xs sm:text-sm shadow-md transition transform active:scale-95 flex items-center gap-2 border border-[#FFD16A]/40"
+                    className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm shadow-md transition transform active:scale-95 flex items-center gap-2 border ${
+                      activeAccount?.role === 'guru'
+                        ? 'bg-[#D9361E] hover:bg-[#B92812] text-white border-[#FFD16A]/40'
+                        : 'bg-white/20 hover:bg-white/30 text-white/80 border-white/20'
+                    }`}
                   >
                     <GraduationCap className="w-4 h-4 text-[#FFD16A]" />
-                    Ruang Guru
+                    <span>Ruang Guru</span>
                   </button>
                 </div>
               </div>
@@ -665,48 +774,47 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Grade Selector (Kelas Rendah 1-3 vs Kelas Tinggi 4-6) */}
-              <div className="inline-flex bg-slate-200/80 p-1 rounded-2xl text-xs font-bold self-start sm:self-auto">
-                <button
-                  onClick={() => {
-                    sound.playPop();
-                    setGradeFilter('semua');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl transition ${
-                    gradeFilter === 'semua'
-                      ? 'bg-white text-[#4F7D32] shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Semua Kelas
-                </button>
-                <button
-                  onClick={() => {
-                    sound.playPop();
-                    setGradeFilter('rendah');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl transition ${
-                    gradeFilter === 'rendah'
-                      ? 'bg-white text-[#4F7D32] shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Kelas 1 - 3 SD
-                </button>
-                <button
-                  onClick={() => {
-                    sound.playPop();
-                    setGradeFilter('tinggi');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl transition ${
-                    gradeFilter === 'tinggi'
-                      ? 'bg-white text-[#4F7D32] shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Kelas 4 - 6 SD
-                </button>
-              </div>
+              {/* Grade Selector / Access Restriction Badge */}
+              {activeAccount?.role === 'siswa' ? (
+                <div className="inline-flex items-center gap-2 bg-[#4F7D32]/10 border-2 border-[#4F7D32]/30 px-3.5 py-1.5 rounded-2xl text-xs font-black text-[#4F7D32] self-start sm:self-auto shadow-xs">
+                  <Lock className="w-3.5 h-3.5 text-[#4F7D32]" />
+                  <span>
+                    Akses Terbatas: <strong>Kelas {user.grade} SDIT BIS</strong>
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex flex-wrap bg-slate-200/80 p-1 rounded-2xl text-xs font-bold self-start sm:self-auto gap-0.5">
+                  <button
+                    onClick={() => {
+                      sound.playPop();
+                      setGradeFilter('semua');
+                    }}
+                    className={`px-2.5 py-1 rounded-xl transition ${
+                      gradeFilter === 'semua'
+                        ? 'bg-white text-[#4F7D32] shadow-sm font-black'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Semua
+                  </button>
+                  {['1', '2', '3', '4', '5', '6'].map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => {
+                        sound.playPop();
+                        setGradeFilter(g);
+                      }}
+                      className={`px-2.5 py-1 rounded-xl transition ${
+                        gradeFilter === g
+                          ? 'bg-white text-[#4F7D32] shadow-sm font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Kls {g}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Subject Category Chips */}
@@ -831,6 +939,8 @@ export default function App() {
           chapters={chapters}
           onUpdateChapters={handleUpdateChapters}
           currentUserEmail={currentUser?.email}
+          activeRole={activeAccount?.role}
+          activeAccountName={activeAccount?.fullName}
           onClose={() => setIsTeacherOpen(false)}
         />
       )}

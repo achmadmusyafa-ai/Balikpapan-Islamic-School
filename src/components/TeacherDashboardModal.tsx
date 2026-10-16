@@ -23,10 +23,14 @@ import {
   Eye,
 } from 'lucide-react';
 
+import { getSavedAccounts } from '../utils/accounts';
+
 interface TeacherDashboardModalProps {
   chapters: QuizChapter[];
   onUpdateChapters: (updated: QuizChapter[]) => void;
   currentUserEmail?: string | null;
+  activeRole?: 'siswa' | 'guru';
+  activeAccountName?: string;
   onClose: () => void;
 }
 
@@ -34,13 +38,18 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   chapters,
   onUpdateChapters,
   currentUserEmail,
+  activeRole,
+  activeAccountName,
   onClose,
 }) => {
-  // Check if current user is admin/teacher by email or PIN
-  const isAutoTeacher = currentUserEmail === 'achmadmusyafa88@gmail.com';
+  // Check if current user is admin/teacher by email, role, or PIN
+  const isAutoTeacher = currentUserEmail === 'achmadmusyafa88@gmail.com' || activeRole === 'guru';
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(isAutoTeacher);
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<string | null>(null);
+
+  // Sub-tabs in Ruang Guru
+  const [dashboardTab, setDashboardTab] = useState<'bankSoal' | 'daftarSiswa'>('bankSoal');
 
   // Management State
   const [selectedChapterId, setSelectedChapterId] = useState<string>(chapters[0]?.id || '');
@@ -55,7 +64,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const [newChapterDesc, setNewChapterDesc] = useState('');
   const [newChapterCategory, setNewChapterCategory] = useState<SubjectCategory>('matematika');
   const [newChapterIcon, setNewChapterIcon] = useState('📝');
-  const [newChapterGrade, setNewChapterGrade] = useState<'semua' | 'rendah' | 'tinggi'>('semua');
+  const [newChapterGrade, setNewChapterGrade] = useState<'semua' | '1' | '2' | '3' | '4' | '5' | '6' | 'rendah' | 'tinggi'>('semua');
 
   // Question Form State
   const [qQuestion, setQQuestion] = useState('');
@@ -68,7 +77,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const [qHint, setQHint] = useState('');
   const [qExplanation, setQExplanation] = useState('');
   const [qFunFact, setQFunFact] = useState('');
-  const [qGradeLevel, setQGradeLevel] = useState<'rendah' | 'tinggi'>('rendah');
+  const [qGradeLevel, setQGradeLevel] = useState<'semua' | 'rendah' | 'tinggi' | '1' | '2' | '3' | '4' | '5' | '6'>('1');
 
   const selectedChapter = chapters.find((c) => c.id === selectedChapterId) || chapters[0];
 
@@ -94,6 +103,15 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     setIsSaving(true);
 
     const newId = `custom_${Date.now()}`;
+    const targetGrades =
+      newChapterGrade === 'semua'
+        ? [1, 2, 3, 4, 5, 6]
+        : newChapterGrade === 'rendah'
+        ? [1, 2, 3]
+        : newChapterGrade === 'tinggi'
+        ? [4, 5, 6]
+        : [Number(newChapterGrade)];
+
     const newChapter: QuizChapter = {
       id: newId,
       category: newChapterCategory,
@@ -103,6 +121,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
       themeColor: 'indigo',
       badgeColor: 'bg-indigo-500',
       gradeLevel: newChapterGrade,
+      targetGrades,
       requiredLevel: 1,
       questions: [],
     };
@@ -336,9 +355,96 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             )}
           </div>
         ) : (
-          <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6 max-h-[520px] overflow-y-auto">
-            {/* Left Column: Chapter List */}
-            <div className="md:col-span-4 border-r border-slate-200 pr-0 md:pr-4 space-y-3">
+          <div className="flex flex-col">
+            {/* Top Sub-tabs */}
+            <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-slate-50/70">
+              <button
+                onClick={() => {
+                  sound.playPop();
+                  setDashboardTab('bankSoal');
+                }}
+                className={`pb-2.5 px-3 text-xs sm:text-sm font-bold font-kids transition flex items-center gap-1.5 border-b-2 ${
+                  dashboardTab === 'bankSoal'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-black'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Kelola Bank Soal & Materi ({chapters.length})</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  sound.playPop();
+                  setDashboardTab('daftarSiswa');
+                }}
+                className={`pb-2.5 px-3 text-xs sm:text-sm font-bold font-kids transition flex items-center gap-1.5 border-b-2 ${
+                  dashboardTab === 'daftarSiswa'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-black'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>👥</span>
+                <span>Data Siswa & Hak Akses Kelas</span>
+              </button>
+            </div>
+
+            {dashboardTab === 'daftarSiswa' ? (
+              <div className="p-4 sm:p-6 space-y-4 max-h-[500px] overflow-y-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-black font-kids text-slate-800">
+                      Daftar Akun Siswa & Pendidik Terdaftar 🏫
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Daftar akun di SDIT Balikpapan Islamic School beserta hak akses kelasnya.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {getSavedAccounts().map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#4F7D32]/40 transition shadow-xs flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                              acc.role === 'guru'
+                                ? 'bg-[#D9361E]/10 text-[#D9361E] border border-[#D9361E]/30'
+                                : 'bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/30'
+                            }`}
+                          >
+                            {acc.role === 'guru' ? '👨‍🏫 Guru / Pendidik' : `🎒 Siswa Kelas ${acc.grade || 1}`}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            @{acc.username}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800 font-kids">
+                          {acc.fullName}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {acc.school}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+                        <span>Sandi: <strong className="font-mono text-slate-800">{acc.password}</strong></span>
+                        <span className="text-[10px] text-slate-400">
+                          {acc.role === 'siswa' ? `Akses: Kls ${acc.grade || 1}` : 'Akses: Semua'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6 max-h-[520px] overflow-y-auto">
+                {/* Left Column: Chapter List */}
+                <div className="md:col-span-4 border-r border-slate-200 pr-0 md:pr-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                   Daftar Bab Kuis ({chapters.length})
@@ -389,10 +495,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     </select>
                     <select
                       value={newChapterGrade}
-                      onChange={(e) => setNewChapterGrade(e.target.value as 'semua' | 'rendah' | 'tinggi')}
+                      onChange={(e) => setNewChapterGrade(e.target.value as any)}
                       className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-semibold"
                     >
                       <option value="semua">Semua Kelas</option>
+                      <option value="1">Khusus Kelas 1</option>
+                      <option value="2">Khusus Kelas 2</option>
+                      <option value="3">Khusus Kelas 3</option>
+                      <option value="4">Khusus Kelas 4</option>
+                      <option value="5">Khusus Kelas 5</option>
+                      <option value="6">Khusus Kelas 6</option>
                       <option value="rendah">Kelas 1-3 SD</option>
                       <option value="tinggi">Kelas 4-6 SD</option>
                     </select>
@@ -692,6 +804,8 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             </div>
           </div>
         )}
+      </div>
+    )}
 
         {/* Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">

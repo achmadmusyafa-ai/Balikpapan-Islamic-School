@@ -1,9 +1,24 @@
-export type SubjectCategory = 'matematika' | 'ipa' | 'indonesia' | 'ips' | 'inggris';
+export type SubjectCategory = 'matematika' | 'ipa' | 'indonesia' | 'ips' | 'inggris' | 'pai';
+
+export type UserRole = 'siswa' | 'guru';
+
+export interface AppAccount {
+  id: string;
+  fullName: string;
+  username: string;
+  password: string; // kata sandi
+  role: UserRole;
+  grade?: number; // 1 | 2 | 3 | 4 | 5 | 6 (jika siswa)
+  school: string;
+  avatarSeed?: number;
+  createdAt: string;
+}
 
 export interface QuizQuestion {
   id: string;
   category: SubjectCategory;
-  gradeLevel: 'rendah' | 'tinggi'; // Kelas 1-3 (rendah) or Kelas 4-6 (tinggi)
+  gradeLevel: 'semua' | 'rendah' | 'tinggi' | '1' | '2' | '3' | '4' | '5' | '6';
+  targetGrades?: number[]; // [1], [2], [1, 2, 3], etc.
   question: string;
   illustrationEmoji?: string;
   options: string[];
@@ -21,7 +36,8 @@ export interface QuizChapter {
   icon: string;
   themeColor: string; // Tailwind color name or hex
   badgeColor: string;
-  gradeLevel: 'semua' | 'rendah' | 'tinggi';
+  gradeLevel: 'semua' | 'rendah' | 'tinggi' | '1' | '2' | '3' | '4' | '5' | '6';
+  targetGrades?: number[]; // e.g. [1] for Kelas 1, [2] for Kelas 2, etc.
   questions: QuizQuestion[];
   requiredLevel: number;
 }
@@ -77,6 +93,7 @@ export interface LeaderboardEntry {
 export interface UserProfile {
   name: string;
   grade: number; // 1 to 6
+  role?: UserRole;
   school: string;
   avatar: AvatarConfig;
   level: number;
